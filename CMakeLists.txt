@@ -4,13 +4,13 @@ set(CMAKE_TOOLCHAIN_FILE "D:/Programming/Utilities/vcpkg/scripts/buildsystems/vc
 
 project(C2MEngine VERSION 0.1.0)
 
-add_compile_options(/std:c++17)
+add_compile_options(/std:c++latest)
 
 include(CTest)
 enable_testing()
 
-find_package(SDL2 CONFIG REQUIRED)
-find_package(GLEW CONFIG REQUIRED)
+find_package(SDL2 REQUIRED)
+find_package(GLEW REQUIRED)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
