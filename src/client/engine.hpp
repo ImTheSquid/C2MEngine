@@ -1,33 +1,37 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+#include <SFML/Graphics.hpp>
 #include <string>
 #include <exception>
 #include <memory>
 #include <iostream>
 #include <GL/glew.h>
+#include <thread>
 
 #include "input/keyboardMouse.hpp"
+#include "gl/shaders/shaderManager.hpp"
+#include "gl/camera.hpp"
 
 namespace c2m {
 namespace client {
 
+struct RootUpdateData {
+    float deltaTime;
+    std::vector<sf::Event> frameEvents;
+};
+
+class IC2MRoot {
+public:
+    virtual void init() {}
+    virtual void update(const RootUpdateData& data) = 0;
+    virtual void render() = 0;
+};
+
+// All of these functions MUST be called on the same thread
 class Engine {
 public:
-    static bool init(const std::string& title, const int width, const int height, const int x = SDL_WINDOWPOS_CENTERED, const int y = SDL_WINDOWPOS_CENTERED, const uint32_t flags = 0) {
-        window = SDL_CreateWindow(title.c_str(), x, y, width, height, flags | SDL_WINDOW_OPENGL);
-        
-        if (window == nullptr) {
-            std::cout << "An error occured while creating the window: " << SDL_GetError() << std::endl;
-            return false;
-        }
-
-        // Initialize OpenGL
-        glContext = SDL_GL_CreateContext(window);
-        if (glContext == NULL) {
-            std::cout << "An error occured while initializing OpenGL: " << SDL_GetError() << std::endl;
-            return false;
-        }
+    static bool init(const std::string& title, const int width, const int height, const int x, const int y, const std::shared_ptr<IC2MRoot>& handler, const GLuint style = 7, const sf::ContextSettings settings = sf::ContextSettings(24, 8, 0, 3, 3, sf::ContextSettings::Attribute::Default, false)) {
+        window = std::make_shared<sf::RenderWindow>(sf::VideoMode(width, height), title, style, settings);
 
         GLenum error = glewInit();
         if (error != GLEW_OK) {
@@ -35,29 +39,80 @@ public:
             return false;
         }
 
-        input = new input::KeyboardMouse(getWindow());
+        auto winSize = window->getSize();
+        glViewport(0, 0, winSize.x, winSize.y);
+        gl::Camera::getProjectionAddr() = glm::perspective(glm::radians(45.0f), (float)winSize.x / (float)winSize.y, 0.1f, 100.0f);
+
+        input = std::make_shared<input::KeyboardMouse>(getWindow());
+        root = handler;
+
+        shaderManager = std::make_shared<gl::ShaderManager>();
 
         return true;
     }
 
-    static std::shared_ptr<SDL_Window> getWindow() {
+    static void startAndWait() {
+        loop();
+    }
+
+    static void stop() {
+        run = false;
+    }
+
+    static std::shared_ptr<sf::RenderWindow> getWindow() {
         if (window == nullptr) {
             throw new std::exception("Window not initialized.");
         }
-        return std::shared_ptr<SDL_Window>(window, [](SDL_Window *win) { SDL_DestroyWindow(win); });
+        return window;
     }
 
     static std::shared_ptr<input::KeyboardMouse> getInput() {
         if (input == nullptr) {
             throw new std::exception("Window not initialized.");
         }
-        return std::shared_ptr<input::KeyboardMouse>(input);
+        return input;
+    }
+
+    static std::shared_ptr<gl::ShaderManager> getShaderManager() {
+        if (shaderManager == nullptr) {
+            throw new std::exception("Window not initialized.");
+        }
+        return shaderManager;
     }
 
 private:
-    inline static SDL_Window *window = nullptr;
-    inline static input::KeyboardMouse *input = nullptr;
-    inline static SDL_GLContext glContext = 0;
+    static void loop() {
+        root->init();
+        sf::Event event;
+        while(run) {
+            std::vector<sf::Event> events;
+            while(window->pollEvent(event)) {
+                switch (event.type) {
+                using enum sf::Event::EventType;
+                case TextEntered:
+                case KeyPressed:
+                case KeyReleased:
+                    input->handleEvent(event);
+                    break;
+                default:
+                    events.push_back(event);
+                    break;
+                }
+            }
+
+            RootUpdateData data{0.0f, events};
+            root->update(data);
+            root->render();
+            window->display();
+        }
+    }
+
+    inline static bool run = true;
+    inline static std::thread mainThread;
+    inline static std::shared_ptr<IC2MRoot> root = nullptr;
+    inline static std::shared_ptr<sf::RenderWindow> window = nullptr;
+    inline static std::shared_ptr<input::KeyboardMouse> input = nullptr;
+    inline static std::shared_ptr<gl::ShaderManager> shaderManager = nullptr;
 };
 
 }

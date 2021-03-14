@@ -10,10 +10,10 @@ template<class CallbackArgT, class CallbackClassT = NullCallback>
 class FunctionPointer {
 public:
     // Non-member callback
-    FunctionPointer(void (*callback)(CallbackArgT)) : target(nullptr), memberFP(nullptr), fp(callback) {};
+    FunctionPointer(void (*callback)(CallbackArgT)) : target(nullptr), memberFP(nullptr), fp(callback) {}
 
     // Member callback
-    FunctionPointer(void (CallbackClassT::* callback)(CallbackArgT), std::shared_ptr<CallbackClassT> target) : target(target), memberFP(callback), fp(nullptr) {};
+    FunctionPointer(void (CallbackClassT::* callback)(CallbackArgT), std::shared_ptr<CallbackClassT> target) : target(target), memberFP(callback), fp(nullptr) {}
 
     void sendCallback(const CallbackArgT& callback) {
         if (target != nullptr) {
@@ -22,7 +22,7 @@ public:
         else {
             (*fp)(callback);
         }
-    };
+    }
 
 private:
     std::shared_ptr<CallbackClassT> target;

@@ -1,21 +1,18 @@
 #include <iostream>
-#include <thread>
+#include <gl/glew.h>
+#include <SDL2/SDL_opengles2.h>
+#include <signal.h>
+#include <assert.h>
 
 #include "client/engine.hpp"
 #include "client/input/keyboardMouse.hpp"
+#include "root.hpp"
+#include "client/gl/drawing/drawable.hpp"
+#include "client/gl/shaders/shader.hpp"
 
 int main(int argc, char **argv) {
-    c2m::client::Engine::init("Test", 200, 200, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SDL_WINDOW_RESIZABLE);
-    
-    bool run = true;
-    while (run) {
-        SDL_Event event;
-        while(SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
-                run = false;
-                break;
-            }
-        }
-    }
+    Root *r = new Root();
+    c2m::client::Engine::init("Test", 500, 500, 0, 0, std::shared_ptr<Root>(r));
+    c2m::client::Engine::startAndWait();
     return 0;
 }

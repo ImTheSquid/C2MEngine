@@ -9,7 +9,7 @@ add_compile_options(/std:c++latest)
 include(CTest)
 enable_testing()
 
-find_package(SDL2 REQUIRED)
+find_package(SFML COMPONENTS system window graphics REQUIRED)
 find_package(GLEW REQUIRED)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
@@ -18,5 +18,5 @@ include(CPack)
 
 add_subdirectory("./src")
 
-target_link_libraries(C2MEngine PRIVATE SDL2::SDL2 SDL2::SDL2main)
-target_link_libraries(C2MEngine PRIVATE GLEW::GLEW)
+target_link_libraries(C2MEngine PUBLIC sfml-system sfml-window sfml-graphics)
+target_link_libraries(C2MEngine PUBLIC GLEW::GLEW)
