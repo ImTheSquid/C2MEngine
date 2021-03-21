@@ -4,6 +4,7 @@
 
 #include "client/engine.hpp"
 #include "client/gl/drawing/triangle.hpp"
+#include "client/gl/drawing/sprite.hpp"
 #include "client/gl/drawing/quad.hpp"
 
 void GLAPIENTRY
@@ -51,12 +52,15 @@ class Root : public c2m::client::IC2MRoot {
         // Set main render queue
         c2m::client::gl::IDrawable::renderQueue = queue;
 
-        triangle = std::make_shared<c2m::client::gl::Triangle>(manager->getShader("polygon"), c2m::common::RGBA{1, 0, 0, 0.5f}, 0.1f, manager->getShader("outline"), c2m::common::RGBA{1, 1, 1, 0.5f});
-        triangle2 = std::make_shared<c2m::client::gl::Triangle>(manager->getShader("polygon"), c2m::common::RGBA{0, 0, 1, 0.5f}, 0.1f, manager->getShader("outline"), c2m::common::RGBA{1, 1, 0, 0.5f});
+        triangle = std::make_shared<c2m::client::gl::Triangle>(manager->getShader("polygon"), c2m::common::RGBA{1, 0, 0, 1}, 0.1f, manager->getShader("outline"), c2m::common::RGBA{1, 1, 1, 0.5f});
+        triangle2 = std::make_shared<c2m::client::gl::Triangle>(manager->getShader("polygon"), c2m::common::RGBA{0, 0, 1, 1}, 0.1f, manager->getShader("outline"), c2m::common::RGBA{1, 1, 0, 0.5f});
         triangle2->translate(glm::vec3(0, 0, 1));
 
         rect = new c2m::client::gl::Quad(glm::vec4(-.5, -.5, 1, 1), manager->getShader("polygon"), c2m::common::RGBA{0, 1, 0, 0.5f}, 0.1f, manager->getShader("outline"), c2m::common::RGBA{1, 1, 1, 1});
         rect->translate(glm::vec3(0, 0, 0.5f));
+
+        triangle2->queueForRender();
+        triangle->queueForRender();
 
         manager->setUniforms<const glm::mat4&>(&c2m::client::gl::Shader::setMat4, "projection", c2m::client::gl::Camera::getProjectionMat());
         manager->setUniforms<const glm::mat4&>(&c2m::client::gl::Shader::setMat4, "view", c2m::client::gl::Camera::getLookMat());
@@ -90,10 +94,12 @@ class Root : public c2m::client::IC2MRoot {
             }
         }
 
-        if (c2m::client::Engine::getInput()->keyIsDown(sf::Keyboard::Up)) c2m::client::gl::Camera::changeCameraPos(glm::vec3{0, 0.01, 0});
-        if (c2m::client::Engine::getInput()->keyIsDown(sf::Keyboard::Down)) c2m::client::gl::Camera::changeCameraPos(glm::vec3{0, -0.01, 0});
-        if (c2m::client::Engine::getInput()->keyIsDown(sf::Keyboard::Right)) c2m::client::gl::Camera::changeCameraPos(glm::vec3{ 0.01, 0, 0 });
-        if (c2m::client::Engine::getInput()->keyIsDown(sf::Keyboard::Left)) c2m::client::gl::Camera::changeCameraPos(glm::vec3{ -0.01, 0, 0 });
+        auto input = c2m::client::Engine::getInput();
+
+        if (input->keyIsDown(sf::Keyboard::Up)) c2m::client::gl::Camera::changeCameraPos(glm::vec3{0, 5 * data.deltaTime, 0});
+        if (input->keyIsDown(sf::Keyboard::Down)) c2m::client::gl::Camera::changeCameraPos(glm::vec3{0, -5 * data.deltaTime, 0});
+        if (input->keyIsDown(sf::Keyboard::Right)) c2m::client::gl::Camera::changeCameraPos(glm::vec3{5 * data.deltaTime, 0, 0 });
+        if (input->keyIsDown(sf::Keyboard::Left)) c2m::client::gl::Camera::changeCameraPos(glm::vec3{-5 * data.deltaTime, 0, 0 });
         manager->setUniforms<const glm::mat4&>(&c2m::client::gl::Shader::setMat4, "view", c2m::client::gl::Camera::getLookMat());
     }
 
@@ -103,9 +109,6 @@ class Root : public c2m::client::IC2MRoot {
         glClearStencil(0);
         glStencilMask(0xFF);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        triangle2->queueForRender();
-        triangle->queueForRender();
         
         queue->executeRender();
         //rect->render();

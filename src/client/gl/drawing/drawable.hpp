@@ -54,24 +54,30 @@ protected:
 // A class that handles rendering order to make sure transparency is handled correctly
 class RenderQueue {
 public:
-    void queueDrawable(std::shared_ptr<IDrawable> drawable) {
+    inline void queueDrawable(std::shared_ptr<IDrawable> drawable) {
         queue.push_back(drawable);
+        hasSorted = false;
     }
 
-    void executeRender() {
-        // Sort queues by Z-distance (2D depth)
-        std::sort(queue.begin(), queue.end(), [](std::shared_ptr<IDrawable> left, std::shared_ptr<IDrawable> right) { return left->getPosition().z < right->getPosition().z; });
+    void executeRender(bool clearQueue = false) {
+        // Only sort if the queue has changed
+        if (!hasSorted) {
+            // Sort queues by Z-distance (2D depth), but only if needed
+            std::sort(queue.begin(), queue.end(), [](std::shared_ptr<IDrawable> left, std::shared_ptr<IDrawable> right) { return left->getPosition().z < right->getPosition().z; });
 
-        // Sort into transparent and opaque queues
-        using DrawableVector = std::vector<std::shared_ptr<IDrawable>>;
-        DrawableVector transparent, opaque;
-        for (const auto& drawable : queue) {
-            if (drawable->getColor().a == 1) {
-                opaque.push_back(drawable);
+            // Sort into transparent and opaque queues
+            transparent.clear();
+            opaque.clear();
+            for (const auto& drawable : queue) {
+                if (drawable->getColor().a == 1) {
+                    opaque.push_back(drawable);
+                }
+                else {
+                    transparent.push_back(drawable);
+                }
             }
-            else {
-                transparent.push_back(drawable);
-            }
+
+            hasSorted = true;
         }
 
         // Render all opaque objects
@@ -88,10 +94,14 @@ public:
         glEnable(GL_DEPTH_TEST);
 
         // Clear queue
-        queue.clear();
+        if (clearQueue) {
+            queue.clear();
+        }
     }
 
 private:
+    std::vector<std::shared_ptr<IDrawable>> transparent, opaque;
+    bool hasSorted = false;
     std::vector<std::shared_ptr<IDrawable>> queue;
 };
 

@@ -47,7 +47,7 @@ public:
         if (shader != nullptr) {
             if (outlineWidth > 0) {
                 glClearStencil(0);
-                //glClear(GL_STENCIL_BUFFER_BIT);
+                glClear(GL_STENCIL_BUFFER_BIT);
                 glStencilFunc(GL_ALWAYS, 1, 0xFF);
                 glStencilMask(0xFF);
             }

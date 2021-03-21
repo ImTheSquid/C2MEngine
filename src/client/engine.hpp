@@ -7,6 +7,7 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <thread>
+#include <chrono>
 
 #include "input/keyboardMouse.hpp"
 #include "gl/shaders/shaderManager.hpp"
@@ -16,6 +17,7 @@ namespace c2m {
 namespace client {
 
 struct RootUpdateData {
+    // Delta time in seconds
     float deltaTime;
     std::vector<sf::Event> frameEvents;
 };
@@ -84,7 +86,13 @@ private:
     static void loop() {
         root->init();
         sf::Event event;
+        auto lastTime = std::chrono::steady_clock::now();
         while(run) {
+            // Delta time
+            auto currentTime = std::chrono::steady_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastTime);
+            float deltaTime = duration.count() / 1000.0f;
+            lastTime = currentTime;
             std::vector<sf::Event> events;
             while(window->pollEvent(event)) {
                 switch (event.type) {
@@ -100,7 +108,7 @@ private:
                 }
             }
 
-            RootUpdateData data{0.0f, events};
+            RootUpdateData data{deltaTime, events};
             root->update(data);
             root->render();
             window->display();
