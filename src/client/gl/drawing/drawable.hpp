@@ -65,30 +65,12 @@ public:
             // Sort queues by Z-distance (2D depth), but only if needed
             std::sort(queue.begin(), queue.end(), [](std::shared_ptr<IDrawable> left, std::shared_ptr<IDrawable> right) { return left->getPosition().z < right->getPosition().z; });
 
-            // Sort into transparent and opaque queues
-            transparent.clear();
-            opaque.clear();
-            for (const auto& drawable : queue) {
-                if (drawable->getColor().a == 1) {
-                    opaque.push_back(drawable);
-                }
-                else {
-                    transparent.push_back(drawable);
-                }
-            }
-
             hasSorted = true;
         }
 
-        // Render all opaque objects
-        glEnable(GL_DEPTH_TEST);
-        for (const auto& drawable : opaque) {
-            drawable->render();
-        }
-
-        // Render all transparent objects from front to back
+        // Render all objects from front to back
         glDisable(GL_DEPTH_TEST);
-        for (const auto& drawable : transparent) {
+        for (const auto& drawable : queue) {
             drawable->render();
         }
         glEnable(GL_DEPTH_TEST);

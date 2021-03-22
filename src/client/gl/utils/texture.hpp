@@ -19,6 +19,7 @@ public:
             image.flipVertically();
             texture->loadFromImage(image);
             texture->generateMipmap();
+            isLoaded = true;
         }
     }
 
@@ -27,6 +28,9 @@ public:
     }
 
     void load() {
+        if (isLoaded) {
+            return;
+        }
         sf::Image image;
         if (!image.loadFromFile(path)) {
             throw new std::exception(strcat("Couldn't load texture from: ", path.c_str()));
@@ -34,10 +38,15 @@ public:
         image.flipVertically();
         texture->loadFromImage(image);
         texture->generateMipmap();
+        isLoaded = true;
     }
 
     void bind() {
         sf::Texture::bind(texture);
+    }
+
+    std::shared_ptr<sf::Texture> get() {
+        return std::shared_ptr<sf::Texture>(texture);
     }
 
     void unbind() {
@@ -45,6 +54,7 @@ public:
     }
 
 private:
+    bool isLoaded = false;
     std::string path;
     sf::Texture *texture;
 };

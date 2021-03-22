@@ -90,8 +90,8 @@ private:
         while(run) {
             // Delta time
             auto currentTime = std::chrono::steady_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastTime);
-            float deltaTime = duration.count() / 1000.0f;
+            auto duration = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastTime);
+            float deltaTime = duration.count() / 1000000.0f;
             lastTime = currentTime;
             std::vector<sf::Event> events;
             while(window->pollEvent(event)) {

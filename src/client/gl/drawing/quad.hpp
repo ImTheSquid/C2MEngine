@@ -75,7 +75,7 @@ public:
         if (outlineShader != nullptr) {
             glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
             glStencilMask(0x00);
-            glDisable(GL_DEPTH_TEST);
+            //glDisable(GL_DEPTH_TEST);
             outlineShader->useShader();
 
             outlineShader->setVec4("color", outlineColor.asVec4());
@@ -86,7 +86,7 @@ public:
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             glStencilMask(0xFF);
-            glEnable(GL_DEPTH_TEST);
+            //glEnable(GL_DEPTH_TEST);
             glStencilFunc(GL_ALWAYS, 1, 0xFF);
         }
     }
