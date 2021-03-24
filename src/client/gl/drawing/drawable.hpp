@@ -21,6 +21,10 @@ public:
 
     inline static std::optional<RenderQueue*> renderQueue = std::nullopt;
 
+    inline bool isTransparent() {
+        return color.a < 1 || outlineColor.a < 1;
+    }
+
     common::RGBA getColor() {
         return color;
     }
@@ -62,18 +66,34 @@ public:
     void executeRender(bool clearQueue = false) {
         // Only sort if the queue has changed
         if (!hasSorted) {
-            // Sort queues by Z-distance (2D depth), but only if needed
-            std::sort(queue.begin(), queue.end(), [](std::shared_ptr<IDrawable> left, std::shared_ptr<IDrawable> right) { return left->getPosition().z < right->getPosition().z; });
+            // Sort into transparent and opaque queues
+            for (const auto& drawable : queue) {
+                if (drawable->isTransparent()) {
+                    transparent.push_back(drawable);
+                }
+                else {
+                    opaque.push_back(drawable);
+                }
+            }
+
+            // Sort transparent objects by Z-distance (2D depth), but only if needed
+            std::sort(transparent.begin(), transparent.end(), [](std::shared_ptr<IDrawable> left, std::shared_ptr<IDrawable> right) { return left->getPosition().z < right->getPosition().z; });
 
             hasSorted = true;
         }
 
-        // Render all objects from front to back
-        glDisable(GL_DEPTH_TEST);
-        for (const auto& drawable : queue) {
+        // Render opaque objects
+        glDepthMask(GL_TRUE);
+        for (const auto& drawable : opaque) {
             drawable->render();
         }
-        glEnable(GL_DEPTH_TEST);
+
+        // Render transparent objects from front to back
+        glDepthMask(GL_FALSE);
+        for (const auto& drawable : transparent) {
+            drawable->render();
+        }
+        glDepthMask(GL_TRUE);
 
         // Clear queue
         if (clearQueue) {
